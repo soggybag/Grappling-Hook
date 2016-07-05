@@ -11,11 +11,7 @@
  
  This example attempts to illustrate a grappling hook mechanic using physics. 
  
- Note that the example isn't working very well in this form. I need to find a way to
- set the length of the spring. There must be a way to do this I just haven't figured
- it out yet. 
- 
- You will need to click near the top of the screen to see an thing happen!
+ Note: this example needs some work. it illustrate the idea but the effect is somewhat random.
  
  The example is built around SKPhysicsJointSpring used to connect the player to 
  a target object. Advantages of this approach: 
@@ -54,7 +50,7 @@ class GameScene: SKScene {
         player.position.y = 100
         player.physicsBody = SKPhysicsBody(rectangleOfSize: playerSize)
         player.physicsBody?.allowsRotation = false
-        
+        player.physicsBody?.linearDamping = 0.5
         
         // Rope
         rope = SKShapeNode()
@@ -66,6 +62,7 @@ class GameScene: SKScene {
         addChild(ropeTarget)
         ropeTarget.physicsBody = SKPhysicsBody(circleOfRadius: 10)
         ropeTarget.physicsBody?.dynamic = false
+        
     }
     
     override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
@@ -75,8 +72,13 @@ class GameScene: SKScene {
         let touch = touches.first
         let location = touch?.locationInNode(self)
         
-        // Move the rope target to the touch position
-        ropeTarget.position = location!
+        
+        // remove the previouse joint
+        physicsWorld.removeJoint(springJoint)
+        
+        // NOTE! The length of the spring is set to the distance between the objects!
+        // To work with this fact move the target to the position of the player.
+        ropeTarget.position = player.position
         
         // Make a spring joint. Attach it to the player and the target
         springJoint = SKPhysicsJointSpring.jointWithBodyA(
@@ -85,8 +87,16 @@ class GameScene: SKScene {
             anchorA: ropeTarget.position,
             anchorB: player.position)
         
+        springJoint.damping = 3
+        springJoint.frequency = 3
+        
         // Add the joint to the physics world
         physicsWorld.addJoint(springJoint)
+        
+        // Now move the target to the touch position.
+        ropeTarget.position = location!
+        // The length of the spring has been set to zero since the position 
+        // of the target was set to the position of the player above. 
     }
    
     override func update(currentTime: CFTimeInterval) {

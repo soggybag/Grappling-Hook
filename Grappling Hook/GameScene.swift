@@ -6,40 +6,99 @@
 //  Copyright (c) 2016 mitchell hudson. All rights reserved.
 //
 
+
+/*
+ 
+ This example attempts to illustrate a grappling hook mechanic using physics. 
+ 
+ Note that the example isn't working very well in this form. I need to find a way to
+ set the length of the spring. There must be a way to do this I just haven't figured
+ it out yet. 
+ 
+ You will need to click near the top of the screen to see an thing happen!
+ 
+ The example is built around SKPhysicsJointSpring used to connect the player to 
+ a target object. Advantages of this approach: 
+ 
+    1. Using this method you would get realisitic pring like motion
+    2. You can also use physics collisions as the spring joint will repsect these. 
+    3. Would be possible to attach the target to a moving object.
+ 
+ Disadvantages of this method:
+    
+    1. Seems more complex than other methods. See the note above.
+ 
+ */
+
 import SpriteKit
 
 class GameScene: SKScene {
+    
+    var player: SKSpriteNode!
+    var rope: SKShapeNode!
+    var ropeTarget: SKSpriteNode!
+    var springJoint = SKPhysicsJointSpring()
+    
     override func didMoveToView(view: SKView) {
         /* Setup your scene here */
-        let myLabel = SKLabelNode(fontNamed:"Chalkduster")
-        myLabel.text = "Hello, World!"
-        myLabel.fontSize = 45
-        myLabel.position = CGPoint(x:CGRectGetMidX(self.frame), y:CGRectGetMidY(self.frame))
         
-        self.addChild(myLabel)
+        // Edge loop
+        physicsBody = SKPhysicsBody(edgeLoopFromRect: view.frame)
+        
+        
+        // Player
+        let playerSize = CGSize(width: 30, height: 30)
+        player = SKSpriteNode(color: UIColor.redColor(), size: playerSize)
+        addChild(player)
+        player.position.x = 200
+        player.position.y = 100
+        player.physicsBody = SKPhysicsBody(rectangleOfSize: playerSize)
+        player.physicsBody?.allowsRotation = false
+        
+        
+        // Rope
+        rope = SKShapeNode()
+        addChild(rope)
+        
+        // Rope Target
+        let ropeTargetSize = CGSize(width: 10, height: 10)
+        ropeTarget = SKSpriteNode(color: UIColor.blueColor(), size: ropeTargetSize)
+        addChild(ropeTarget)
+        ropeTarget.physicsBody = SKPhysicsBody(circleOfRadius: 10)
+        ropeTarget.physicsBody?.dynamic = false
     }
     
     override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
        /* Called when a touch begins */
         
-        for touch in touches {
-            let location = touch.locationInNode(self)
-            
-            let sprite = SKSpriteNode(imageNamed:"Spaceship")
-            
-            sprite.xScale = 0.5
-            sprite.yScale = 0.5
-            sprite.position = location
-            
-            let action = SKAction.rotateByAngle(CGFloat(M_PI), duration:1)
-            
-            sprite.runAction(SKAction.repeatActionForever(action))
-            
-            self.addChild(sprite)
-        }
+        // On a touch find the position of the touch
+        let touch = touches.first
+        let location = touch?.locationInNode(self)
+        
+        // Move the rope target to the touch position
+        ropeTarget.position = location!
+        
+        // Make a spring joint. Attach it to the player and the target
+        springJoint = SKPhysicsJointSpring.jointWithBodyA(
+            ropeTarget.physicsBody!,
+            bodyB: player.physicsBody!,
+            anchorA: ropeTarget.position,
+            anchorB: player.position)
+        
+        // Add the joint to the physics world
+        physicsWorld.addJoint(springJoint)
     }
    
     override func update(currentTime: CFTimeInterval) {
         /* Called before each frame is rendered */
+        
+        // This code handles drawing the line between the player and target
+        let ropePath = CGPathCreateMutable()
+        CGPathMoveToPoint(ropePath, nil, player.position.x, player.position.y)
+        CGPathAddLineToPoint(ropePath, nil, ropeTarget.position.x, ropeTarget.position.y)
+        rope.path = ropePath
+        rope.strokeColor = UIColor.orangeColor()
+        rope.lineWidth = 4
+        
     }
 }

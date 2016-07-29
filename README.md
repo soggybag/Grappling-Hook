@@ -14,3 +14,5 @@ This example attempts to illustrate a grappling hook mechanic using physics.
  Disadvantages of this method:
     
     1. Seems more complex than other methods. See the note above.
+
+![screenshot](screenshot.gif)
